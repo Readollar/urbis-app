@@ -21,23 +21,19 @@ export default function ExploreScreen() {
   const router = useRouter();
   const { session } = useAuth();
   
-  // Data States
   const [properties, setProperties] = useState<any[]>([]);
   const [savedPropertyIds, setSavedPropertyIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [firstName, setFirstName] = useState('Citizen');
   
-  // UI States
   const [viewMode, setViewMode] = useState<'list' | 'map'>('list');
   const [showFilters, setShowFilters] = useState(false);
   const [activePill, setActivePill] = useState('All');
 
-  // Active Filter States
   const [searchQuery, setSearchQuery] = useState('');
   const [minPrice, setMinPrice] = useState('');
   const [maxPrice, setMaxPrice] = useState('');
   
-  // Advanced Filters (from Modal)
   const [filters, setFilters] = useState({
     flat: true,
     duplex: true,
@@ -95,21 +91,17 @@ export default function ExploreScreen() {
 
   const displayedProperties = useMemo(() => {
     return properties.filter((p) => {
-      // 1. Text Search
       const searchLower = searchQuery.toLowerCase();
       const matchesSearch = p.title.toLowerCase().includes(searchLower) || (p.city && p.city.toLowerCase().includes(searchLower)) || (p.state && p.state.toLowerCase().includes(searchLower));
       
-      // 2. Advanced Category Filter (Modal)
       const matchesType = filters[p.type as keyof typeof filters] === true;
       
-      // 3. Quick Pill Filter
       let matchesPill = true;
       if (activePill === 'Apartment') matchesPill = p.type === 'flat' || p.type === 'self_con';
       if (activePill === 'Duplex') matchesPill = p.type === 'duplex';
       if (activePill === 'Short-let') matchesPill = p.type === 'short_let';
       if (activePill === 'Commercial') matchesPill = p.type === 'commercial' || p.type === 'land_plot';
 
-      // 4. Budget
       const min = minPrice ? parseInt(minPrice) : 0;
       const max = maxPrice ? parseInt(maxPrice) : Infinity;
       const matchesBudget = p.price >= min && p.price <= max;
@@ -176,9 +168,11 @@ export default function ExploreScreen() {
   return (
     <View className="flex-1 bg-white">
       <TopBar /> 
-      <ScrollView showsVerticalScrollIndicator={false} className="pt-4">
+      {/* 1. Removed pt-4 from ScrollView so the content sits closer to TopBar */}
+      <ScrollView showsVerticalScrollIndicator={false}>
         
-        <View className="px-6 mb-6">
+        {/* 2. Added pt-6 here to give a slight top margin when TopBar is hidden on Desktop */}
+        <View className="px-6 mb-6 pt-6">
           <Text className="text-sm text-gray-500 font-semibold">{timeOfDayGreeting}</Text>
           <View className="flex-row items-center mt-1">
             <Text className="text-3xl font-bold text-[#1E3A8A]">{firstName}!</Text>
@@ -187,7 +181,8 @@ export default function ExploreScreen() {
           <Text className="text-sm text-gray-500 font-medium leading-5 mt-1">Ready to start your next adventure? Start exploring properties now.</Text>
         </View>
 
-        <View className="px-6 flex-row items-center bg-gray-50 rounded-2xl mx-6 px-4 py-3 mb-6 border border-gray-100">
+        {/* 3. Removed mx-6 from Search Bar so it perfectly aligns with text margins */}
+        <View className="px-6 flex-row items-center bg-gray-50 rounded-2xl mx-6 px-4 py-3 mb-6 border border-gray-100" style={{ marginHorizontal: 24 }}>
           <Ionicons name="search" size={20} color="#9CA3AF" />
           <TextInput
             className="flex-1 ml-3 text-[#1E3A8A] font-medium h-8"

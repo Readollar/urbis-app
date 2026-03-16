@@ -9,10 +9,12 @@ function DesktopSidebar() {
   const pathname = usePathname();
 
   const NavItem = ({ icon, label, route }: { icon: any, label: string, route: string }) => {
-    const isActive = pathname.includes(route);
+    // Check if the current URL matches the route (ignoring the hidden /(tabs) part)
+    const isActive = pathname.includes(route.replace('/(tabs)', '')); 
+    
     return (
       <TouchableOpacity
-        onPress={() => router.push(route)}
+        onPress={() => router.push(route as any)}
         className={`flex-row items-center px-6 py-4 my-1 rounded-2xl ${isActive ? 'bg-blue-50' : 'bg-transparent'}`}
       >
         <Ionicons name={icon} size={24} color={isActive ? '#2563EB' : '#9CA3AF'} />
@@ -29,12 +31,12 @@ function DesktopSidebar() {
         <Text className="text-3xl font-black text-gray-900 tracking-tight ml-2">Urbis</Text>
       </View>
 
-      {/* Navigation Links */}
-      <NavItem icon="search" label="Explore" route="/explore" />
-      <NavItem icon="heart-outline" label="Shortlist" route="/saved" />
-      <NavItem icon="home-outline" label="My Homes" route="/homes" />
-      <NavItem icon="chatbubble-outline" label="Messages" route="/messages" />
-      <NavItem icon="person-outline" label="Profile" route="/profile" />
+      {/* Navigation Links - Explicitly routing to /(tabs)/... */}
+      <NavItem icon="search" label="Explore" route="/(tabs)/explore" />
+      <NavItem icon="heart-outline" label="Shortlist" route="/(tabs)/saved" />
+      <NavItem icon="home-outline" label="My Homes" route="/(tabs)/homes" />
+      <NavItem icon="chatbubble-outline" label="Messages" route="/(tabs)/messages" />
+      <NavItem icon="person-outline" label="Profile" route="/(tabs)/profile" />
     </View>
   );
 }
@@ -42,7 +44,6 @@ function DesktopSidebar() {
 export default function TabLayout() {
   const { session, isLoading } = useAuth();
   
-  // Magic logic for responsiveness
   const { width } = useWindowDimensions();
   const isDesktop = Platform.OS === 'web' && width >= 768;
 
@@ -58,7 +59,7 @@ export default function TabLayout() {
 
   return (
     <View className="flex-1 flex-row bg-white">
-      {/* Only show sidebar if on a wide screen */}
+      {/* Sidebar renders on left if window is wide */}
       {isDesktop && <DesktopSidebar />}
       
       {/* Main Content Area */}
@@ -72,7 +73,7 @@ export default function TabLayout() {
               fontSize: 10,
               marginTop: -2,
             },
-            // Hide the bottom tab bar if we are showing the desktop sidebar
+            // Hide mobile tabs on desktop
             tabBarStyle: isDesktop ? { display: 'none' } : {
               backgroundColor: '#FFFFFF',
               borderTopWidth: 1,

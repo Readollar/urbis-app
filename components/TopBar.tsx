@@ -1,13 +1,19 @@
-// components/TopBar.tsx
-import { View, Text, TouchableOpacity } from 'react-native';
+import { View, Text, TouchableOpacity, useWindowDimensions, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function TopBar() {
+  // Logic to hide the TopBar on wide desktop screens (since the Sidebar takes over)
+  const { width } = useWindowDimensions();
+  const isDesktop = Platform.OS === 'web' && width >= 768;
+
+  if (isDesktop) {
+    return null; // Don't render anything if we are on a wide desktop
+  }
+
   return (
-    // SafeAreaView ensures the header doesn't hide behind the phone's status bar
     <SafeAreaView edges={['top']} className="bg-white">
-      <View className="flex-row justify-between items-center px-6 py-4 mb-1 bg-white border-b border-gray-50">
+      <View className="flex-row justify-between items-center px-6 py-4 bg-white border-b border-gray-50">
         
         {/* LOGO AREA */}
         <View className="flex-row items-center">

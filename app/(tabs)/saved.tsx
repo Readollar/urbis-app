@@ -41,79 +41,105 @@ export default function SavedScreen() {
     }, [session])
   );
 
+  // New function to handle un-saving directly from this screen
+  const removeSavedProperty = async (propertyId: string) => {
+    if (!session?.user?.id) return;
+    
+    // Optimistically update the UI instantly
+    setSavedProperties(prev => prev.filter(p => p.id !== propertyId));
+    
+    // Delete from database
+    await supabase
+      .from('saved_properties')
+      .delete()
+      .match({ user_id: session.user.id, property_id: propertyId });
+  };
+
   return (
     <View className="flex-1 bg-white">
       <TopBar />
-      <View className="px-6 mb-4">
-        <Text className="text-3xl font-bold text-blue-900 mb-2">Saved Homes</Text>
-        <Text className="text-sm text-gray-500 font-medium leading-5">
-          Properties you've kept an eye on for your next move.
-        </Text>
-      </View>
-
-      {loading ? (
-        <ActivityIndicator color="#2563EB" className="mt-10" />
-      ) : savedProperties.length === 0 ? (
-        <View className="flex-1 justify-center items-center pb-20">
-          <Ionicons name="heart-dislike-outline" size={64} color="#E5E7EB" />
-          <Text className="text-lg font-bold text-gray-400 mt-4">No saved properties yet</Text>
-          <Text className="text-sm text-gray-400 mt-2 text-center px-8">
-            Tap the heart icon on any property in the Explore tab to save it here.
+      
+      {/* Wrapped everything in the ScrollView to match Explore's layout behavior */}
+      <ScrollView 
+        showsVerticalScrollIndicator={false} 
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); fetchSavedProperties(); }} tintColor="#2563EB" />}
+      >
+        {/* HEADER - Added pt-6 for desktop safety and updated to deep blue */}
+        <View className="px-6 mb-6 pt-6">
+          <Text className="text-3xl font-bold text-[#1E3A8A] mb-2">Saved Homes</Text>
+          <Text className="text-sm text-gray-500 font-medium leading-5">
+            Properties you've kept an eye on for your next move.
           </Text>
-          <TouchableOpacity 
-            className="mt-8 bg-blue-50 px-6 py-3 rounded-full"
-            onPress={() => router.push('/(tabs)/explore')}
-          >
-            <Text className="text-blue-600 font-bold">Start Exploring</Text>
-          </TouchableOpacity>
         </View>
-      ) : (
-        <ScrollView 
-          showsVerticalScrollIndicator={false} className="px-6"
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); fetchSavedProperties(); }} tintColor="#2563EB" />}
-        >
-          {savedProperties.map((property) => (
-            <TouchableOpacity 
-              key={property.id} 
-              activeOpacity={0.9}
-              onPress={() => router.push(`/property/${property.id}`)}
-              className="bg-white rounded-3xl mb-6 border border-gray-100 overflow-hidden shadow-sm"
-            >
-              <View className="relative h-56 w-full bg-gray-100">
-                <Image 
-                  source={{ uri: property.images?.[0] || 'https://via.placeholder.com/600' }} 
-                  className="w-full h-full"
-                  contentFit="cover"
-                />
-                <TouchableOpacity className="absolute top-4 right-4 bg-white p-2 rounded-full shadow-sm">
-                  <Ionicons name="heart" size={20} color="#EF4444" />
-                </TouchableOpacity>
-              </View>
 
-              <View className="p-5">
-                <View className="flex-row justify-between items-center mb-1">
-                  <Text className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
-                    {property.type.replace('_', ' ')} • VERIFIED
-                  </Text>
-                </View>
-                <View className="flex-row items-baseline mb-2">
-                  <Text className="text-2xl font-bold text-blue-900">₦{property.price.toLocaleString()}</Text>
-                  <Text className="text-sm text-gray-500 font-medium"> 
-                    {property.type === 'hotel_room' ? '/ night' : property.type === 'land_plot' ? ' total' : ' / year'}
-                  </Text>
-                </View>
-                <View className="flex-row items-center">
-                  <Ionicons name="location-outline" size={14} color="#9CA3AF" />
-                  <Text className="text-xs text-gray-500 ml-1 font-medium" numberOfLines={1}>
-                    {property.city ? `${property.city}, ` : ''}{property.state || 'Nigeria'}
-                  </Text>
-                </View>
-              </View>
+        {loading ? (
+          <ActivityIndicator color="#2563EB" className="mt-10" />
+        ) : savedProperties.length === 0 ? (
+          <View className="flex-1 justify-center items-center py-20">
+            <Ionicons name="heart-dislike-outline" size={64} color="#E5E7EB" />
+            <Text className="text-lg font-bold text-gray-400 mt-4">No saved properties yet</Text>
+            <Text className="text-sm text-gray-400 mt-2 text-center px-8">
+              Tap the heart icon on any property in the Explore tab to save it here.
+            </Text>
+            <TouchableOpacity 
+              className="mt-8 bg-[#2563EB] px-8 py-4 rounded-full shadow-md shadow-blue-500/30"
+              onPress={() => router.push('/(tabs)/explore')}
+            >
+              <Text className="text-white font-bold text-base">Start Exploring</Text>
             </TouchableOpacity>
-          ))}
-          <View className="h-10" />
-        </ScrollView>
-      )}
+          </View>
+        ) : (
+          <View className="px-6">
+            {savedProperties.map((property) => (
+              <TouchableOpacity 
+                key={property.id} 
+                activeOpacity={0.9}
+                onPress={() => router.push(`/property/${property.id}`)}
+                className="bg-white rounded-3xl mb-6 border border-gray-100 overflow-hidden shadow-sm w-full"
+              >
+                {/* Updated to h-48 to match Explore cards perfectly */}
+                <View className="relative h-48 w-full bg-gray-100">
+                  <Image 
+                    source={{ uri: property.images?.[0] || 'https://via.placeholder.com/600' }} 
+                    className="w-full h-full"
+                    contentFit="cover"
+                  />
+                  <TouchableOpacity 
+                    onPress={(e) => { 
+                      e.stopPropagation(); 
+                      removeSavedProperty(property.id); 
+                    }}
+                    className="absolute top-4 right-4 bg-white/90 p-2 rounded-full shadow-sm"
+                  >
+                    <Ionicons name="heart" size={20} color="#EF4444" />
+                  </TouchableOpacity>
+                </View>
+
+                <View className="p-4">
+                  <View className="flex-row justify-between items-center mb-1">
+                    <Text className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                      {property.type.replace('_', ' ')} • VERIFIED
+                    </Text>
+                  </View>
+                  <View className="flex-row items-baseline mb-2">
+                    <Text className="text-xl font-bold text-[#1E3A8A]">₦{property.price.toLocaleString()}</Text>
+                    <Text className="text-xs text-gray-500 font-medium"> 
+                      {property.type === 'short_let' ? '/ night' : property.type === 'land_plot' ? ' total' : ' / year'}
+                    </Text>
+                  </View>
+                  <View className="flex-row items-center mb-3">
+                    <Ionicons name="location-outline" size={14} color="#9CA3AF" />
+                    <Text className="text-xs text-gray-500 ml-1 font-medium" numberOfLines={1}>
+                      {property.city ? `${property.city}, ` : ''}{property.state || 'Nigeria'}
+                    </Text>
+                  </View>
+                </View>
+              </TouchableOpacity>
+            ))}
+            <View className="h-10" />
+          </View>
+        )}
+      </ScrollView>
     </View>
   );
 }
